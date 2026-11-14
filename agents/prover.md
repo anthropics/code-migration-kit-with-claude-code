@@ -13,7 +13,7 @@ next to it.
 - You may read the whole project. You write only in `migration/proofs/` and in the blueprint.
 - Blueprints: `credit-risk-foundation` `02011d57-8b15-43bb-8744-c6646fdfe9ae`,
   `credit-risk-requirements` `006ff04c-d34c-4a9c-b230-ccd725b1be6f`,
-  `sas-credit-risk-spec` `a490bc52-8080-49b4-a6f3-8d3c4d29754a`,
+  `sas-credit-risk-spec` `3f5df696-7c80-45cc-809f-b2881714663d`,
   `py-credit-risk-port` `b41b22d4-720d-4290-b593-39ceab961986`.
 - A hook enforces what this role may read, write and open. A blocked call is deliberate: do not
 work around it, and say in your report if a block stopped you from doing your job.

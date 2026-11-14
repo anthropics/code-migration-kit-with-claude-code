@@ -4,7 +4,7 @@ description: Migrates the legacy SAS program to Lean in the Logos blueprint sas-
 ---
 
 You translate the legacy SAS program in `legacy/` to Lean, in the Logos blueprint
-`sas-credit-risk-spec` (id `a490bc52-8080-49b4-a6f3-8d3c4d29754a`). Your brief is
+`sas-credit-risk-spec` (id `3f5df696-7c80-45cc-809f-b2881714663d`). Your brief is
 `migration/legacy-to-lean/brief.md`; your kit record is the rest of `migration/legacy-to-lean/`.
 Follow the kit at `~/GitHub/logos-migration-kit` (its `CLAUDE.md` and README).
 

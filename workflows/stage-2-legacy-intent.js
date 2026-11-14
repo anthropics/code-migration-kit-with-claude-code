@@ -33,7 +33,7 @@ log('Check passed')
 phase('Assemble')
 const asm = await agent(`${COMMON}
 
-STEP: part 1 of "What to build": define sasPipeline in the legacy blueprint, and nothing else. Read the manifest and the units first. Return what each field is wired to, every parameter of sasPipeline with the hypothesis it will carry, and anything in the interface that the legacy units cannot fill as they are.`,
+STEP: part 1 of "What to build": define sasPipeline and the parameter-links definition in the legacy blueprint, and nothing else. If sasPipeline already exists from an earlier run, revise it to match the brief as it now stands (the brief has changed: read it again in full). Read the manifest and the units first. Return what each field is wired to, every parameter of sasPipeline with the hypothesis it will carry, and anything in the interface that the legacy units cannot fill as they are.`,
   { label: 'assemble the pipeline', phase: 'Assemble', agentType: T, schema: { type: 'object', properties: {
     item_id: { type: 'string' }, accepted: { type: 'boolean' },
     wiring: { type: 'array', items: { type: 'string' } },
@@ -44,7 +44,7 @@ if (!asm || !asm.accepted) { log('STOP: the pipeline could not be assembled'); r
 log(`Assembled ${asm.item_id}: ${asm.parameters.length} parameters, ${asm.mismatches.length} interface mismatch(es)`)
 const asmReview = await agent(`${COMMON}
 
-STEP: independent review of ${asm.item_id}. You did not write it. Read its Lean (get_items) and the legacy units it uses, and the brief's part 1. Report anything that is not pure wiring: logic added or dropped, a unit skipped or applied to the wrong table, a renamed column, a step that returns an error where the legacy Lean does not stop (or the reverse), a parameter that is constrained more than the brief allows or that hides behaviour. Do not edit anything. An empty list is a fine result. The author's description: ${JSON.stringify(asm)}`,
+STEP: independent review of ${asm.item_id}. You did not write it. Read its Lean (get_items) and the legacy units it uses, and the brief's part 1. Report anything that is not pure wiring: logic added or dropped, a unit skipped or applied to the wrong table, a renamed column, a step that returns an error where the legacy Lean does not stop (or the reverse), a parameter that is constrained more or less than the brief's table of links says, or that hides behaviour. Do not edit anything. An empty list is a fine result. The author's description: ${JSON.stringify(asm)}`,
   { label: 'review the assembly', phase: 'Assemble', agentType: T, schema: { type: 'object', properties: {
     defects: { type: 'array', items: { type: 'string' } } }, required: ['defects'] } })
 if (asmReview && asmReview.defects.length) {
@@ -61,17 +61,17 @@ STEP: correct ${asm.item_id} on the reviewer's defects below, or answer each one
 phase('State')
 const stated = await agent(`${COMMON}
 
-STEP: part 2 of "What to build": add and state the contracts for ${JSON.stringify(REQS)} (theorem items sas_Qk, each exactly Qk applied to ${asm.item_id} under the parameter links, statement ending in sorry). Do not prove anything. Finish when every statement is accepted.`,
+STEP: parts 2 and 2b of "What to build": add and state the contracts for ${JSON.stringify(REQS)} (theorem items sas_Qk, each exactly Qk applied to ${asm.item_id} under the parameter links, statement ending in sorry), and the theorem score_chains_agree; return it in contracts with requirement 'chains'. Do not prove anything. Finish when every statement is accepted.`,
   { label: 'state the contracts', phase: 'State', agentType: T, schema: { type: 'object', properties: {
     contracts: { type: 'array', items: { type: 'object', properties: { requirement: { type: 'string' }, item_id: { type: 'string' }, accepted: { type: 'boolean' } }, required: ['requirement', 'item_id', 'accepted'] } },
     problems: { type: 'array', items: { type: 'string' } } }, required: ['contracts', 'problems'] } })
 if (!stated) return { stopped_at: 'state', check, asm }
 const todo = stated.contracts.filter(c => c.accepted)
-log(`Stated ${todo.length} of ${REQS.length} contracts`)
+log(`Stated ${todo.length} of ${REQS.length + 1} contracts`)
 
 const VERDICT = { type: 'object', properties: {
   requirement: { type: 'string' }, item_id: { type: 'string' },
-  outcome: { type: 'string', enum: ['proved', 'disproved', 'interface-mismatch', 'needs-ruling', 'open'] },
+  outcome: { type: 'string', enum: ['proved', 'by-construction', 'disproved', 'interface-mismatch', 'needs-ruling', 'open'] },
   kind_detail: { type: 'string', description: 'for disproved: the counterexample input, what the requirement demands, what the legacy code produces, file and lines, and the smallest change that would meet the requirement; otherwise what is missing' },
   conditional_on: { type: 'array', items: { type: 'string' }, description: 'parameter links the proof used' } },
   required: ['requirement', 'item_id', 'outcome', 'kind_detail', 'conditional_on'] }
@@ -95,7 +95,7 @@ const checks = []
 for (let i = 0; i < disproved.length; i += BATCH) {
   const rs = await parallel(disproved.slice(i, i + BATCH).map(v => () => agent(`${COMMON}
 
-STEP: independent check of one disproof. You did not write it. Contract ${v.item_id} (${v.requirement}) is reported disproved: ${v.kind_detail}. Check, reading the blueprint yourself: (1) the negation is stated as the exact negation of the contract and its proof is accepted, with no axiom or sorry; (2) the counterexample input really meets InputOK and the parameter links; (3) the failure is the legacy code's, not an artefact of how sasPipeline was assembled or of a parameter chosen adversarially where the legacy program has no such freedom; (4) the lines blamed are the right ones. Do not edit anything.`,
+STEP: independent check of one disproof. You did not write it. Contract ${v.item_id} (${v.requirement}) is reported disproved: ${v.kind_detail}. Check, reading the blueprint yourself: (1) the negation is stated as the exact negation of the contract and its proof is accepted, with no axiom or sorry; (2) the counterexample input really meets InputOK, the parameter links and the legacy units' own preconditions; (3) the failure is the legacy code's, not an artefact of how sasPipeline was assembled or of a parameter chosen adversarially where the legacy program has no such freedom; (4) the lines blamed are the right ones. Do not edit anything.`,
     { label: `check ${v.requirement}`, phase: 'Verify', agentType: T, schema: { type: 'object', properties: {
       requirement: { type: 'string' }, holds: { type: 'boolean' }, artefact: { type: 'boolean' }, note: { type: 'string' } },
       required: ['requirement', 'holds', 'artefact', 'note'] } })))
