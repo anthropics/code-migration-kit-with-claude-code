@@ -1,0 +1,47 @@
+{
+  "legacy_copies_outside": ["../credit-risk-sas"],
+  "blueprints": {
+    "requirements": ["credit-risk-requirements", "006ff04c-d34c-4a9c-b230-ccd725b1be6f"],
+    "legacy": ["sas-credit-risk-spec", "a490bc52-8080-49b4-a6f3-8d3c4d29754a"],
+    "port": ["py-credit-risk-port", "b41b22d4-720d-4290-b593-39ceab961986"]
+  },
+  "roles": {
+    "requirements-formaliser": {
+      "home": "migration/requirements",
+      "read": ["legacy/MODEL_CARD.md", "legacy/README.md", "migration/requirements/**", "migration/foundation/**"],
+      "write": ["migration/requirements/**"],
+      "deny_blueprints": ["legacy", "port"]
+    },
+    "legacy-translator": {
+      "home": "migration/legacy-to-lean",
+      "read": ["legacy/**", "judge/README.md", "judge/run_sas.py", "judge/mutations.py", "judge/known_warnings.txt",
+               "judge/pyproject.toml", "judge/uv.lock", "judge/reference/**", "judge/scenarios/**",
+               "migration/legacy-to-lean/**", "migration/legacy-to-port/experiments/*.sas",
+               "migration/legacy-to-port/experiments/*.log", "migration/legacy-to-port/experiments/*.lst",
+               "migration/foundation/**", "migration/requirements/requirements.md"],
+      "write": ["migration/legacy-to-lean/**"],
+      "deny_blueprints": ["port"]
+    },
+    "port-translator": {
+      "home": "migration/port-to-lean",
+      "read": ["port/**", "legacy/data/**", "judge/scenarios/**", "migration/port-to-lean/**", "migration/foundation/**"],
+      "write": ["migration/port-to-lean/**"],
+      "deny_blueprints": ["legacy", "requirements"]
+    },
+    "prover": {
+      "read": ["**"],
+      "write": ["migration/proofs/**"],
+      "deny_blueprints": []
+    },
+    "coding-agent": {
+      "read": ["**"],
+      "write": ["legacy/**", "port/**", "judge/**", "out/**", "migration/legacy-to-port/**", "migration/proofs/**"],
+      "deny_blueprints": ["requirements", "legacy", "port"]
+    },
+    "*": {
+      "read": ["README.md", "migration/README.md"],
+      "write": [],
+      "deny_blueprints": ["requirements", "legacy", "port"]
+    }
+  }
+}
